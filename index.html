@@ -77,11 +77,14 @@
     </style>
 </head>
 <body>
+    <!-- Main Screen with Level Selection -->
     <div id="main-screen">
         <h1>Music Notation Game</h1>
-        <button id="start-game">Start Game</button>
+        <button id="level1">Level One</button>
+        <button id="level2">Level Two</button>
     </div>
 
+    <!-- Game Screen -->
     <div id="game-screen">
         <div id="question-counter"></div>
         <div id="vexflowContainer">
@@ -102,41 +105,47 @@
         </div>
     </div>
 
+    <!-- Score Screen -->
     <div id="score-screen">
         <h2>Your Score: <span id="score"></span>%</h2>
         <button id="back-to-main">Back to Main Screen</button>
     </div>
 
+    <!-- VexFlow Library and Game Logic -->
     <script src="https://cdn.jsdelivr.net/npm/vexflow@4.2.2/build/cjs/vexflow.js"></script>
     <script>
-        let score, questionNumber, correctPosition, selectedPositions = new Set();
+        // Global Variables
+        let numNotes, score, questionNumber, correctPositions, selectedPositions = new Set();
         const positionToPitch = {
             1: "e/4", 2: "f/4", 3: "g/4", 4: "a/4", 5: "b/4",
             6: "c/5", 7: "d/5", 8: "e/5", 9: "f/5"
         };
 
-        document.getElementById('start-game').addEventListener('click', () => startGame());
+        // Event Listeners for Level Buttons
+        document.getElementById('level1').addEventListener('click', () => startGame(1));
+        document.getElementById('level2').addEventListener('click', () => startGame(2));
 
+        // Back to Main Screen
         document.getElementById('back-to-main').addEventListener('click', () => {
             document.getElementById('score-screen').style.display = 'none';
             document.getElementById('main-screen').style.display = 'block';
         });
 
+        // Position Button Click Handler
         document.querySelectorAll('.position-btn').forEach(btn => {
             btn.addEventListener('click', () => {
                 const pos = parseInt(btn.dataset.pos);
                 if (selectedPositions.has(pos)) {
                     selectedPositions.delete(pos);
                     btn.classList.remove('selected');
-                } else if (selectedPositions.size < 1) {
+                } else if (selectedPositions.size < numNotes) {
                     selectedPositions.add(pos);
                     btn.classList.add('selected');
-                    // Force reflow to ensure color change is rendered
-                    btn.offsetHeight;
+                    btn.offsetHeight; // Force reflow for color update
                 }
-                if (selectedPositions.size === 1) {
+                if (selectedPositions.size === numNotes) {
                     document.getElementById('game-screen').style.display = 'none';
-                    if ([...selectedPositions][0] === correctPosition) {
+                    if (arraysEqual([...selectedPositions].sort(), correctPositions.sort())) {
                         score++;
                     }
                     questionNumber++;
@@ -149,14 +158,17 @@
             });
         });
 
-        function startGame() {
+        // Start Game with Selected Level
+        function startGame(level) {
+            numNotes = level; // Level 1: 1 note, Level 2: 2 notes
             score = 0;
             questionNumber = 1;
             document.getElementById('main-screen').style.display = 'none';
             startQuestion();
         }
 
-        function drawStaffWithNote(position) {
+        // Render Notes on Staff
+        function drawStaffWithNotes(positions) {
             const vfDiv = document.getElementById('vf');
             vfDiv.innerHTML = '';
             const VF = Vex.Flow;
@@ -165,16 +177,18 @@
             const context = renderer.getContext();
             const stave = new VF.Stave(10, 40, 180);
             stave.setContext(context).draw();
-            const note = new VF.StaveNote({ keys: [positionToPitch[position]], duration: "q" });
+            const keys = positions.map(pos => positionToPitch[pos]);
+            const note = new VF.StaveNote({ keys: keys, duration: "q" });
             const voice = new VF.Voice({ num_beats: 1, beat_value: 4 });
             voice.addTickables([note]);
             new VF.Formatter().joinVoices([voice]).format([voice], 160);
             voice.draw(context, stave);
         }
 
+        // Start a New Question
         function startQuestion() {
-            correctPosition = getRandomPosition();
-            drawStaffWithNote(correctPosition);
+            correctPositions = getRandomPositions(numNotes);
+            drawStaffWithNotes(correctPositions);
             const gameScreen = document.getElementById('game-screen');
             const vexflowContainer = document.getElementById('vexflowContainer');
             const spaceButtons = document.getElementById('space-buttons');
@@ -190,12 +204,26 @@
             document.querySelectorAll('.position-btn').forEach(btn => btn.classList.remove('selected'));
         }
 
-        function getRandomPosition() {
+        // Generate Random Distinct Positions
+        function getRandomPositions(k) {
             const positions = [1, 2, 3, 4, 5, 6, 7, 8, 9];
-            const index = Math.floor(Math.random() * positions.length);
-            return positions[index];
+            for (let i = positions.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [positions[i], positions[j]] = [positions[j], positions[i]];
+            }
+            return positions.slice(0, k);
         }
 
+        // Compare Arrays for Equality
+        function arraysEqual(a, b) {
+            if (a.length !== b.length) return false;
+            for (let i = 0; i < a.length; i++) {
+                if (a[i] !== b[i]) return false;
+            }
+            return true;
+        }
+
+        // Display Final Score
         function showScore() {
             const percentage = (score / 20) * 100;
             document.getElementById('score').textContent = percentage.toFixed(2);
