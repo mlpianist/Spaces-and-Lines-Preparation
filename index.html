@@ -168,22 +168,36 @@
         }
 
         // Render Notes on Staff
-        function drawStaffWithNotes(positions) {
-            const vfDiv = document.getElementById('vf');
-            vfDiv.innerHTML = '';
-            const VF = Vex.Flow;
-            const renderer = new VF.Renderer(vfDiv, VF.Renderer.Backends.SVG);
-            renderer.resize(200, 150);
-            const context = renderer.getContext();
-            const stave = new VF.Stave(10, 40, 180);
-            stave.setContext(context).draw();
-            const keys = positions.map(pos => positionToPitch[pos]);
-            const note = new VF.StaveNote({ keys: keys, duration: "q" });
-            const voice = new VF.Voice({ num_beats: 1, beat_value: 4 });
-            voice.addTickables([note]);
-            new VF.Formatter().joinVoices([voice]).format([voice], 160);
-            voice.draw(context, stave);
-        }
+        // Render Notes on Staff – Level 1: chord, Level 2: two consecutive notes
+function drawStaffWithNotes(positions) {
+    const vfDiv = document.getElementById('vf');
+    vfDiv.innerHTML = '';
+
+    const VF = Vex.Flow;
+    const renderer = new VF.Renderer(vfDiv, VF.Renderer.Backends.SVG);
+    renderer.resize(450, 180);  // Made it wider for two separate notes
+    const context = renderer.getContext();
+
+    const stave = new VF.Stave(10, 40, 420);
+    stave.addClef('treble').setContext(context).draw(); // optional – you can remove .addClef('treble') if you really don't want any clef
+    // stave.setContext(context).draw();  ← use this line instead if you want NO clef at all
+
+    const notes = positions.map(pos => 
+        new VF.StaveNote({ keys: [positionToPitch[pos]], duration: "q" })
+    );
+
+    // For Level 1 (1 note) → still show as a single note (which looks the same as before)
+    // For Level 2 (2 notes) → show two separate consecutive quarter notes
+    const voice = new VF.Voice({ 
+        num_beats: numNotes,   // 1 beat for Level 1, 2 beats for Level 2
+        beat_value: 4 
+    });
+
+    voice.addTickables(notes);
+
+    new VF.Formatter().joinVoices([voice]).format([voice], 400);
+    voice.draw(context, stave);
+}
 
         // Start a New Question
         function startQuestion() {
@@ -233,4 +247,5 @@
     </script>
 </body>
 </html>
+
 
