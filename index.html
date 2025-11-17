@@ -149,7 +149,7 @@
                         score++;
                     }
                     questionNumber++;
-                    if (questionNumber <= 20) {
+                    if (questionNumber <= 10) {
                         startQuestion();
                     } else {
                         showScore();
@@ -199,7 +199,7 @@
             spaceButtons.style.display = 'grid';
             lineButtons.style.display = 'grid';
             questionCounter.style.display = 'block';
-            questionCounter.textContent = `Questions Remaining: ${20 - questionNumber + 1}`;
+            questionCounter.textContent = `Question ${questionNumber} of 10`;;
             selectedPositions.clear();
             document.querySelectorAll('.position-btn').forEach(btn => btn.classList.remove('selected'));
         }
@@ -225,7 +225,7 @@
 
         // Display Final Score
         function showScore() {
-            const percentage = (score / 20) * 100;
+            const percentage = (score / 10) * 100;
             document.getElementById('score').textContent = percentage.toFixed(2);
             document.getElementById('game-screen').style.display = 'none';
             document.getElementById('score-screen').style.display = 'block';
@@ -233,3 +233,4 @@
     </script>
 </body>
 </html>
+
