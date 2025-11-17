@@ -167,46 +167,45 @@
             startQuestion();
         }
 
-        // Render Notes on Staff
-        // Render Notes on Staff – Level 1: chord, Level 2: two consecutive notes
-        // Render Notes on Staff – Level 1: single note, Level 2: two consecutive notes horizontally
-        function drawStaffWithNotes(positions) {
-            const vfDiv = document.getElementById('vf');
-            vfDiv.innerHTML = '';
-        
-            const VF = Vex.Flow;
-            const renderer = new VF.Renderer(vfDiv, VF.Renderer.Backends.SVG);
-            renderer.resize(450, 200);
-            const context = renderer.getContext();
-        
-            // Draw stave without clef (remove .addClef('treble') to keep it clean)
-            const stave = new VF.Stave(20, 40, 410);
-            stave.setContext(context).draw();
-        
-            // Create one StaveNote per position (each note has exactly ONE key)
-            const notes = positions.map(pos => 
-                new VF.StaveNote({ 
-                    keys: [positionToPitch[pos]],  // ← only one pitch per note
-                    duration: "q"                  // quarter note
-                })
-            );
-        
-            // Create a voice that matches the number of notes (1 or 2 beats)
-            const voice = new VF.Voice({
-                num_beats: numNotes,      // 1 for Level 1, 2 for Level 2
-                beat_value: 4
+        // Render Notes on Staff - Updated for Level 2 (consecutive notes)
+function drawStaffWithNotes(positions) {
+    const vfDiv = document.getElementById('vf');
+    vfDiv.innerHTML = '';
+    const VF = Vex.Flow;
+    const renderer = new VF.Renderer(vfDiv, VF.Renderer.Backends.SVG);
+    renderer.resize(400, 180);  // Made it wider so two notes fit nicely
+    const context = renderer.getContext();
+
+    // Draw the stave (no clef, no time signature - exactly like before)
+    const stave = new VF.Stave(10, 40, 360);
+    stave.setContext(context).draw();
+
+    const notes = [];
+
+    // For Level 1: still show one note (chord with one key)
+    // For Level 2: show two separate quarter notes
+    if (numNotes === 1) {
+        const note = new VF.StaveNote({ keys: [positionToPitch[positions[0]]], duration: "q" });
+        notes.push(note);
+    } else { // Level 2 - two consecutive notes
+        positions.forEach((pos, index) => {
+            const note = new VF.StaveNote({
+                keys: [positionToPitch[pos]],
+                duration: "q"
             });
-        
-            voice.setStave(stave);
-            voice.addTickables(notes);
-        
-            // Format and draw
-            new VF.Formatter()
-                .joinVoices([voice])
-                .formatToStave([voice], stave);
-        
-            voice.draw(context, stave);
-        }
+            // Optional: add a small stem direction change so they look nicer side-by-side
+            if (pos >= 6) note.setStemDirection(VF.Stem.DOWN);
+            notes.push(note);
+        });
+    }
+
+    const voice = new VF.Voice({ num_beats: numNotes, beat_value: 4 });
+    voice.setStrict(false); // Allows flexible formatting
+    voice.addTickables(notes);
+
+    new VF.Formatter().joinVoices([voice]).format([voice], 350);
+    voice.draw(context, stave);
+}
 
         // Start a New Question
         function startQuestion() {
@@ -256,6 +255,7 @@
     </script>
 </body>
 </html>
+
 
 
 
